@@ -2,10 +2,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.robot.config import ROBOT_SIGNAL_TIMEOUT_SECONDS
-from app.robot.jetson_router import router as jetson_router
+from app.config import ROBOT_SIGNAL_TIMEOUT_SECONDS
+from app.robot.router import router as robot_router
 from app.robot.service import RobotSignalState
-from app.robot.status_router import router as status_router
+from app.web.router import router as web_router
 
 
 @asynccontextmanager
@@ -17,5 +17,5 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Gureumi Backend", lifespan=lifespan)
-app.include_router(jetson_router)
-app.include_router(status_router)
+app.include_router(robot_router)
+app.include_router(web_router)
