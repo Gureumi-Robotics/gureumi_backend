@@ -3,8 +3,11 @@ name = "gureumi-backend-new"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "bcrypt>=5.0.0",
     "fastapi>=0.162.5",
+    "psycopg[binary]>=3.3.9",
     "pydantic>=2.14.3",
+    "pydantic-settings>=2.16.3",
     "uvicorn[standard]>=0.54.0",
 ]
 
