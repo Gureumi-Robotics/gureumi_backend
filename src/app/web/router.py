@@ -2,9 +2,9 @@ import asyncio
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.robot.config import STATUS_SEND_INTERVAL_SECONDS
-from app.robot.schemas import RobotConnectionStatus
+from app.config import STATUS_SEND_INTERVAL_SECONDS
 from app.robot.service import RobotSignalState
+from app.web.schemas import RobotConnectionStatus
 
 router = APIRouter()
 
