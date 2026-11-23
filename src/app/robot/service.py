@@ -1,9 +1,12 @@
+import asyncio
 import logging
 import math
 import time
 from typing import Callable, Literal
 
-from app.robot.schemas import JetsonHeartbeat
+from fastapi import WebSocket, WebSocketDisconnect
+
+from app.robot.schemas import JetsonHeartbeat, MotorCommand
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -33,3 +36,36 @@ class RobotSignalState:
         elapsed = self._clock() - self._last_received_at
 
         return 1 if elapsed < self.timeout_seconds else 0
+
+
+class RobotUnavailableError(Exception):
+    pass
+
+
+class RobotConnection:
+    def __init__(self) -> None:
+        self._socket: WebSocket | None = None
+        self._send_lock = asyncio.Lock()
+
+    def register(self, websocket: WebSocket) -> bool:
+        if self._socket is not None:
+            return False
+
+        self._socket = websocket
+        return True
+
+    def unregister(self, websocket: WebSocket) -> None:
+        if self._socket is websocket:
+            self._socket = None
+
+    async def send_command(self, command: MotorCommand) -> None:
+        async with self._send_lock:
+            socket = self._socket
+            if socket is None:
+                raise RobotUnavailableError()
+
+            try:
+                await socket.send_json(command.model_dump(mode="json"))
+            except (WebSocketDisconnect, OSError, RuntimeError) as exc:
+                self.unregister(socket)
+                raise RobotUnavailableError() from exc
