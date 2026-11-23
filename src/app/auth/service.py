@@ -51,3 +51,21 @@ async def create_session(conn: AsyncConnection[DictRow], user_id: int) -> str:
         (hash_token(token), user_id, SESSION_IDLE_MINUTES),
     )
     return token
+
+
+async def get_user_by_session(
+    conn: AsyncConnection[DictRow], token: str
+) -> DictRow | None:
+    cur = await conn.execute(
+        """
+        UPDATE sessions
+        SET expires_at = now() + make_interval(mins => %s)
+        FROM users
+        WHERE sessions.token_hash = %s
+          AND sessions.expires_at > now()
+          AND users.id = sessions.user_id
+        RETURNING users.id, users.username
+        """,
+        (SESSION_IDLE_MINUTES, hash_token(token)),
+    )
+    return await cur.fetchone()

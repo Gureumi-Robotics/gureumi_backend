@@ -4,6 +4,7 @@ from psycopg.rows import DictRow
 
 from app.auth import service
 from app.auth.config import SESSION_COOKIE_NAME
+from app.auth.dependencies import get_current_user
 from app.auth.schemas import LoginRequest, UserResponse
 from app.config import settings
 from app.database import get_db
@@ -28,7 +29,6 @@ async def login(
         )
 
     token = await service.create_session(conn, user["id"])
-    await conn.commit()
 
     response.set_cookie(
         SESSION_COOKIE_NAME,
@@ -37,4 +37,13 @@ async def login(
         secure=settings.COOKIE_SECURE,
         samesite="lax",
     )
+    return user
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    responses={401: {"description": "로그인하지 않았거나 세션 만료"}},
+)
+async def me(user: UserResponse = Depends(get_current_user)):
     return user
