@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from typing import Annotated
+
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from psycopg import AsyncConnection
 from psycopg.rows import DictRow
 
@@ -47,3 +49,21 @@ async def login(
 )
 async def me(user: UserResponse = Depends(get_current_user)):
     return user
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    response: Response,
+    conn: AsyncConnection[DictRow] = Depends(get_db),
+    token: Annotated[str | None, Cookie(alias=SESSION_COOKIE_NAME)] = None,
+):
+    # get_current_user 미사용: 만료·로그아웃 상태에서도 401 없이 성공 처리
+    if token:
+        await service.delete_session(conn, token)
+
+    response.delete_cookie(
+        SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+    )

@@ -69,3 +69,9 @@ async def get_user_by_session(
         (SESSION_IDLE_MINUTES, hash_token(token)),
     )
     return await cur.fetchone()
+
+
+async def delete_session(conn: AsyncConnection[DictRow], token: str) -> None:
+    await conn.execute(
+        "DELETE FROM sessions WHERE token_hash = %s", (hash_token(token),)
+    )
