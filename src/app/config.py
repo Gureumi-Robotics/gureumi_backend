@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     DATABASE_URL: SecretStr
+    COOKIE_SECURE: bool = False
 
 
 settings = Settings()  # pyright: ignore[reportCallIssue]
