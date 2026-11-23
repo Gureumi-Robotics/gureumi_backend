@@ -4,7 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from app.robot.schemas import JetsonHeartbeat
-from app.robot.service import RobotSignalState
+from app.robot.service import RobotConnection, RobotSignalState
 
 router = APIRouter()
 
@@ -12,7 +12,12 @@ router = APIRouter()
 @router.websocket("/ws/robot")
 async def receive_robot_signal(websocket: WebSocket) -> None:
     state: RobotSignalState = websocket.app.state.robot_signal
+    connection: RobotConnection = websocket.app.state.robot_connection
     await websocket.accept()
+
+    if not connection.register(websocket):
+        await websocket.close()
+        return
 
     try:
         while True:
@@ -25,3 +30,5 @@ async def receive_robot_signal(websocket: WebSocket) -> None:
             state.record(signal)
     except WebSocketDisconnect:
         return
+    finally:
+        connection.unregister(websocket)
