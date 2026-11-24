@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: SecretStr
     COOKIE_SECURE: bool = False
+    CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 
 
 settings = Settings()  # pyright: ignore[reportCallIssue]
