@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from json import JSONDecodeError
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -11,9 +12,10 @@ from app.robot.service import (
     RobotSignalState,
     RobotUnavailableError,
 )
-from app.web.schemas import RobotConnectionStatus
+from app.web.schemas import RobotConnectionStatus, WebMotorCommand
 
 router = APIRouter()
+logger = logging.getLogger("uvicorn.error")
 
 
 @router.websocket("/ws/robot-status")
@@ -47,10 +49,15 @@ async def receive_motor_command(websocket: WebSocket) -> None:
         while True:
             try:
                 data = await websocket.receive_json()
-                command = MotorCommand.model_validate(data)
+                request = WebMotorCommand.model_validate(data)
             except (JSONDecodeError, KeyError, ValidationError):
                 continue
 
+            if request.command == "stop":
+                logger.info("web.stop_requested")
+                continue
+
+            command = MotorCommand.model_validate(request.model_dump())
             try:
                 await connection.send_command(command)
             except RobotUnavailableError:
