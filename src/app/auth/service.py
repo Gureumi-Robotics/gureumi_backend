@@ -53,6 +53,20 @@ async def create_session(conn: AsyncConnection[DictRow], user_id: int) -> str:
     return token
 
 
+async def check_session(conn: AsyncConnection[DictRow], token: str) -> DictRow | None:
+    cur = await conn.execute(
+        """
+        SELECT users.id, users.username
+        FROM sessions
+        JOIN users ON users.id = sessions.user_id
+        WHERE sessions.token_hash = %s
+          AND sessions.expires_at > now()
+        """,
+        (hash_token(token),),
+    )
+    return await cur.fetchone()
+
+
 async def get_user_by_session(
     conn: AsyncConnection[DictRow], token: str
 ) -> DictRow | None:
