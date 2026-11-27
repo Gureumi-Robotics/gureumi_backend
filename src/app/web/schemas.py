@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class RobotConnectionStatus(BaseModel):
     jetson_status: Literal[0, 1]
+    control_holder: str | None = None
 
 
 class WebMotorCommand(BaseModel):

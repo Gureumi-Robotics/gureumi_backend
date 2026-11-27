@@ -1,16 +1,14 @@
-import asyncio
 import logging
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import WebSocketDisconnect
 from pydantic import ValidationError
 
 from app.robot.schemas import MotorCommand
 from app.robot.service import RobotUnavailableError
-from app.web.router import receive_motor_command
 from app.web.schemas import WebMotorCommand
+from helpers import run_commands
 
 
 def test_stop_is_web_only():
@@ -18,16 +16,6 @@ def test_stop_is_web_only():
     assert WebMotorCommand.model_validate(data).command == "stop"
     with pytest.raises(ValidationError):
         MotorCommand.model_validate(data)
-
-
-def run_commands(messages, connection):
-    websocket = SimpleNamespace(
-        app=SimpleNamespace(state=SimpleNamespace(robot_connection=connection)),
-        accept=AsyncMock(),
-        receive_json=AsyncMock(side_effect=[*messages, WebSocketDisconnect()]),
-    )
-    asyncio.run(receive_motor_command(websocket))
-    websocket.accept.assert_awaited_once()
 
 
 def test_stop_is_logged_but_only_forward_reaches_robot(caplog):
